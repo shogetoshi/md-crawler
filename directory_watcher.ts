@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { replaceNewLine } from "./replace_zenn";
 
 interface FileState {
   [filename: string]: string; // ファイル名をキーに、最終更新日時を値として持つ
@@ -62,42 +63,6 @@ class FileChangeDetector {
   }
 }
 
-export function replaceNewLine(input: string): string {
-  const newLines: string[] = [];
-  const lines = input.split("\n").map((line) => `${line}\n`);
-  let inCode = false;
-
-  for (let i = 0; i + 1 < lines.length; i++) {
-    let curr = lines[i];
-    let next = lines[i + 1];
-
-    if (curr.match(/^```/)) {
-      // コードの開始・終了行はそのまま出力
-      inCode = !inCode;
-    }
-    if (curr.trim().length === 0) {
-      // 空行はそのまま
-    } else if (next.trim().length === 0) {
-      // 次の行が空行の時はそのまま
-    } else {
-      if (inCode) {
-        // コード内部はそのまま
-      } else {
-        if (!/^(#+|-|\*|\d+\.) /.test(curr.trim())) {
-          if (!/^(#+|-|\*|\d+\.) /.test(next.trim())) {
-            curr = curr.slice(0, -1) + " ";
-          }
-        }
-      }
-    }
-    newLines.push(curr);
-
-    // 最後の行は無条件にそのまま入れる
-    if (i + 1 === lines.length - 1) newLines.push(next.slice(0, -1));
-  }
-  return newLines.join("");
-}
-
 function replaceAndSave(inputPath: string, outputPath: string): void {
   try {
     // 入力ファイルの内容を読み込む
@@ -115,10 +80,12 @@ function replaceAndSave(inputPath: string, outputPath: string): void {
   }
 }
 
-// 使用例
-const detector = new FileChangeDetector("./my_directory", "./file_state.json");
+const args = process.argv.slice(2);
+console.log(args);
+
+const detector = new FileChangeDetector(args[0], "./file_state.json");
 const changedFiles = detector.checkForChanges();
 for (const file of changedFiles) {
-  replaceAndSave(path.join("./my_directory", file), path.join("./out", file));
+  replaceAndSave(path.join(args[0], file), path.join(args[1], file));
 }
 console.log("Changed files:", changedFiles);
