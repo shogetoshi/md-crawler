@@ -71,13 +71,14 @@ export function replaceNewLine(input: string): string {
     let curr = lines[i];
     let next = lines[i + 1];
 
+    if (curr.match(/^```/)) {
+      // コードの開始・終了行はそのまま出力
+      inCode = !inCode;
+    }
     if (curr.trim().length === 0) {
       // 空行はそのまま
     } else if (next.trim().length === 0) {
       // 次の行が空行の時はそのまま
-    } else if (curr.match(/^```/)) {
-      // コードの開始・終了行はそのまま出力
-      inCode = !inCode;
     } else {
       if (inCode) {
         // コード内部はそのまま
